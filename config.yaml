@@ -1,0 +1,58 @@
+# FinSentinel — Central Configuration
+# All tuneable parameters live here. Never hardcode values in source files.
+
+tickers:
+  - AAPL
+  - MSFT
+  - JPM
+  - GS
+  - MS
+
+date_range:
+  start: "2024-01-01"
+  end: "today"   # "today" is resolved at runtime to date.today()
+
+sentiment:
+  model_name: "ProsusAI/finbert"
+  buy_threshold: 0.55       # lowered from 0.6 — easier to trigger BUY
+  sell_threshold: 0.45      # raised from 0.4 — easier to trigger SELL
+  momentum_threshold: 0.02  # lowered from 0.1 — less momentum required
+  batch_size: 16
+  recency_weight_24h: 2.0          # articles < 24h old get 2x weight
+  momentum_window_days: 3          # rolling window for sentiment momentum
+
+signals:
+  consistency_days: 1              # 1 = no smoothing filter; signals fire immediately
+  confidence_scale: true           # whether to output 0-1 confidence scores
+
+backtest:
+  initial_capital: 100000          # USD
+  transaction_cost: 0.001          # 0.1% per side
+  max_hold_days: 10                # max bars to hold a position
+  kelly_fraction: 0.5              # fractional Kelly (half-Kelly for safety)
+
+scraper:
+  rate_limit_seconds: 1            # pause between HTTP requests
+  retry_attempts: 3                # number of retries on failure
+  retry_backoff_factor: 2          # exponential back-off multiplier
+  yahoo_rss_base: "https://feeds.finance.yahoo.com/rss/2.0/headline"
+  sec_edgar_base: "https://efts.sec.gov/LATEST/search-index"
+  lookback_days: 90                # how many calendar days of news to fetch
+  output_dir: "data/raw"
+  newsdata_max_pages: 5            # max pages per ticker (10 articles/page, 5 credits/page)
+
+preprocessor:
+  min_article_length: 30           # tokens — discard very short snippets
+  irrelevant_keywords:             # articles containing these are dropped
+    - "advertisement"
+    - "sponsored content"
+    - "click here"
+    - "subscribe now"
+    - "press release"              # keep earnings press releases? set false below
+  keep_press_releases: true
+
+logging:
+  level: "INFO"                    # DEBUG | INFO | WARNING | ERROR
+  format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+  datefmt: "%Y-%m-%d %H:%M:%S"
+  file: "logs/finsentinel.log"     # set to null to log to stdout only
